@@ -1,0 +1,148 @@
+### Device Hardware Configuration ################################################
+###
+### Apply Device Template 2.0 ####################################################
+packages:
+  template: !include
+    file: common/template.yaml
+    vars:
+      devicename: ${devicename}
+      friendly_devicename: ${friendly_devicename}
+      device_namelabel: ${device_namelabel}
+      device_ip_address: ${device_ip_address}
+# Connection roubleshooting: Remove commments to override template
+#wifi:
+#  use_address: ${devicename}.local
+#  use_address: ${device_ip_address}
+###
+### Core Configuration Settings: WARNING confirm before adoption ##################
+###
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf    
+###
+### Template Substitutions: Adjust during setup ###################################
+###
+substitutions:
+  devicename: "esphome-humidor"       #used as mDNS name
+  friendly_devicename: "ESP Humidor"  #used in ESP Manager & HA Device
+  device_namelabel: "Humidor"         #used in Entity labels as prefix
+  device_ip_address: "10.0.20.252"    #must be DHCP reserved. For wifi settings changes / mDNS failures
+###
+### Device Specific Substitutions: Adjust during setup
+###
+  humidity_setpoint_select_low: "65" #Lowest setpoint available in HA
+  humidity_setpoint_select_high: "75" #Highest setpoint available in HA
+  Pin_DHT_sensor: "GPIO21" #Green
+  Pin_Fan_PWMinput: "GPIO17" #Blue Thin
+  Pin_Fan_RPMoutput: "GPIO16" #Green Thin
+###
+### Wiring Notes
+# Pin 21 - Green - DHT sensor
+# Pin 17 - Blue Thin - Fan PWM input
+# Pin 16 - Green Thin - Fan RPM output
+# Pin VCC - Red, Yellow Thin
+# Pin GND - Black x2
+###
+#
+### Custom Device Configuration ################################################
+#
+### Home Assistant Input ###################################
+#
+globals:
+  - id: global_humidity_setpoint
+    type: float
+    restore_value: True
+    initial_value: '70'
+#
+number:
+  - platform: template
+    id: humidity_setpoint
+    name: "Humidity Setpoint"
+    optimistic: true   #### not sure this is correct
+    initial_value: 70
+    min_value: ${humidity_setpoint_select_low}
+    max_value: ${humidity_setpoint_select_high}
+    step: 0.1
+    restore_value: True
+    on_value:
+      then:
+        - lambda: |-
+            id(global_humidity_setpoint) = float(x);
+#
+#  - platform: homeassistant
+#    name: "Humidity Set"
+#    id: humidity_setpoint
+#    entity_id: input_number.humidor_level
+#
+### Humidor Climate Monitoring ###################################
+#
+sensor:
+  - platform: dht
+    pin: "${Pin_DHT_sensor}"
+    temperature:
+      name: "${device_namelabel} Temperature"
+    humidity:
+      name: "${device_namelabel} Humidity"
+      id: humidity
+### Humidor Fan Automation ###################################
+### Enhancements in progress:
+###   Change to PID function: https://esphome.io/components/climate/pid
+# Enhancements mostly done:
+#   Add HA controllable set point
+#   Tweak +-Deadband to better fit with sensor specs, at least 1 degree 
+# Enhancements to consider:
+#   Global default fan to off?
+#   Add initial power on update followed by less frequent intervals?
+      on_value_range:
+#        - above: global_humidity_setpoint ##this is a big test!
+#        - above: !lambda "global_humidity_setpoint;" ##this is a big test!
+        - above: 70.1
+          then:
+            - switch.turn_off:
+                id: humidor_fan
+        - below: 68.9
+          then:
+            - switch.turn_on:
+                id: humidor_fan
+    update_interval: 15s
+### Detect low humidity and notify ###################################
+#
+# Fan running without humidity rising?
+# Humidity below a threshold? Will opening trigger a false alarm?
+# Stop running fan at full speed until refilled?
+#
+### Cigar Fan Control ###################################
+#
+# NOTE: currently binary on/off swtich.
+#
+# Pin 17 - Blue Thin - Fan PWM input
+switch:
+  - platform: gpio
+    pin: "${Pin_Fan_PWMinput}"
+    id: humidor_fan
+    name: "${device_namelabel} Fan Power"
+#
+# DRAFT: Fan platform to use PWM for speed control. Replaces switch above, requires modifing DHT automation
+#
+# Pin 17 - Blue Thin - Fan PWM input
+#output:
+#  - platform: ledc
+#    pin: GPIO17
+#    frequency: 10000 Hz
+#    id: humidor_fan_pwm
+#fan:
+#  - platform: speed
+#    output: humidor_fan_pwm
+#    name: "${device_namelabel} Fan PWM"
+#
+# DRAFT: Monitor fan RPM. Is this meaningfully different from PWM setting other than troubleshooting?
+# Pin 16 - Green Thin - Fan RPM output
+# Use pulse counter?
+#
+# Whitepaper note to convert to Hertz to RPM:
+#   Tachometer output signal is in Hertz (= per second)
+#   The fan sends two impulses per revolution
+#   Fan speeds are usually in RPM (= per minute)
+#   Formula: RPM = herz (per second) / 2 pulses * 60 seconds
+##  If using a pulsecounter can it just be diveded by 2?

@@ -1,0 +1,119 @@
+### Device Basic Configuration ################################################
+### Device Template 1.0
+substitutions:
+  devicename: "esphome-proto"
+  friendly_devicename: "ESP Proto"
+#these must be set correctly on adoption
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    
+###
+### END
+### Common ESPHome Device Configurations ################################################
+### No or few changes should be needed
+#
+esphome:
+  name: ${devicename}
+  friendly_name: ${friendly_devicename}
+  min_version: 2024.11.0
+  name_add_mac_suffix: false
+# Enable logging
+logger:
+# Enable Home Assistant API and encryption key
+api:
+  encryption: 
+    key: !secret API_key
+# Enable Over The Air updates with ESPhome
+ota:
+  platform: esphome
+# Enable Wifi commented lines are for moving between networks
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+#  use_address: ${devicename}.local
+#  use_address: 10.0.20.89
+#
+# Enable fallback hotspot & captive portal in case wifi connection fails >1 minute
+  ap:
+    ssid: ${devicename}
+    password: !secret ESPadmin_password
+captive_portal:
+
+### Common Diagnostic Display Configuration ################################################
+# Adds Diagnostics to HA
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_devicename}: IP"
+      icon: "mdi:ip-outline"
+    mac_address:
+      name: "${friendly_devicename}: MAC"
+      icon: "mdi:network-outline"
+    ssid:
+      name: "${friendly_devicename}: SSID"
+      icon: "mdi:wifi-settings"      
+### Moved To Custom ## #### testing as an include
+###
+packages:
+  template: !include
+    file: common/template.yaml
+    vars:
+      friendly_devicename: "${friendly_devicename}"
+      devicename: ${devicename}
+      device_namelabel: ${friendly_devicename}
+#sensor:
+#  - platform: wifi_signal
+#    name: "${friendly_devicename}: WiFi Signal"
+#    update_interval: 60s
+# Restart & Safe Mode Buttons to HA
+button:
+  - platform: restart
+    name: "Restart Device"
+  - platform: safe_mode
+    name: "Restart in Safe Mode"
+### Custom Device Configuration ################################################
+# Wiring
+# Pin 19 - DHT sensor Orange 
+# Pin 25 - PWM yellow (old 19)
+# Pin 26 - Fan RPM (brown)
+# Pin VCC - 
+# Pin GND - 
+#
+### Cigar Climate Monitoring ###################################
+#
+sensor:
+  - platform: dht
+# Pin 19 - DHT sensor Orange 
+    pin: GPIO19
+    temperature:
+      name: "Humidor Temperature"
+    humidity:
+      name: "Humidor Humidity"
+    id: humidity
+    update_interval: 60s
+## from Global ##
+#  - platform: wifi_signal
+#    name: "${friendly_devicename}: WiFi Signal"
+#    update_interval: 60s
+### Cigar Fan Control ###################################
+#
+#output:
+# Pin 25 - PWM yellow (old 19)
+#  - platform: ledc
+#    pin: GPIO25
+#    frequency: 10000 Hz
+#    id: ventilation_fan_pwm
+# Example configuration entry
+switch:
+  - platform: gpio
+    pin: GPIO25
+    name: "Fan"
+#fan:
+#  - platform: speed
+#    output: ventilation_fan_pwm
+#    name: "Cigar Fan Speed"
+# Pin 26 - Fan RPM (brown)
+#
+# nothing yet, maybe part of 

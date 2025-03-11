@@ -1,0 +1,52 @@
+### Template 2.0
+###
+### Template ESPHome Configuration #############################################
+esphome:
+  name: ${devicename}
+  friendly_name: ${friendly_devicename}
+  min_version: 2024.11.0
+  name_add_mac_suffix: false
+# Enable logging
+logger:
+# Enable Home Assistant API and encryption key
+api:
+  encryption: 
+    key: !secret API_key
+# Enable Over The Air updates with ESPhome
+ota:
+  platform: esphome
+# Wifi provisioning
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+# Enable fallback hotspot & captive portal in case wifi connection fails >1 minute
+  ap:
+    ssid: ${devicename}
+    password: !secret ESPadmin_password
+captive_portal:
+###
+### Template Diagnostic Display ################################################
+###
+# Adds Diagnostics to HA
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${device_namelabel}: IP"
+      icon: "mdi:ip-outline"
+    mac_address:
+      name: "${device_namelabel}: MAC"
+      icon: "mdi:network-outline"
+    ssid:
+      name: "${device_namelabel}: SSID"
+      icon: "mdi:wifi-settings"      
+sensor:
+  - platform: wifi_signal
+    name: "${device_namelabel}: WiFi Signal"
+    update_interval: 60s
+# Restart & Safe Mode Buttons to HA
+button:
+  - platform: restart
+    name: "Restart ${device_namelabel}"
+  - platform: safe_mode
+    name: "Restart in Safe Mode"
+### END
