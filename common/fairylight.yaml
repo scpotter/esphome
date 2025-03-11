@@ -1,0 +1,32 @@
+### Unfinished
+#
+# Starter yaml for a template
+# tested with a costco fairylight
+#
+# This can be added to the blank device temaplte by adding this under packages:
+#  switch: !include common/fairylight.yaml
+#
+### Custom Device Configuration ################################################
+# Wiring
+# Pin 3.3V  # Red
+# Pin GND   # Black
+
+# Pin 18 - yellow - LED 1 momentary switch (power)
+# Pin 19 - green - LED 2 momentary switch (mode)
+
+### Momentary switches for testing LED buttons #################################
+switch:
+  - platform: gpio
+    pin: GPIO18
+    id: relay1
+    name: "LED 1 Power"
+    on_turn_on:
+    - delay: 250ms
+    - switch.turn_off: relay1
+  - platform: gpio
+    pin: GPIO19
+    id: relay2
+    name: "LED 2 Mode"
+    on_turn_on:
+    - delay: 250ms
+    - switch.turn_off: relay2
