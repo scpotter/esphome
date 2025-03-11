@@ -1,0 +1,40 @@
+### Device Hardware Configuration ################################################
+###
+### Apply Device Template 2.0 ####################################################
+packages:
+  template: !include
+    file: common/template.yaml
+    vars:
+### Template Substitutions: Adjust during setup ###################################
+      devicename: "esphome-humidor"       #used as mDNS name
+      friendly_devicename: "ESP Humidor"  #used in ESP Manager & HA Device
+      device_namelabel: "Humidor"         #used in Entity labels as prefix
+      device_ip_address: "10.0.20.252"    #must be DHCP reserved. For wifi settings changes / mDNS failures
+# Connection roubleshooting: Remove commments to override template
+#wifi:
+#  use_address: ${devicename}.local
+#  use_address: ${device_ip_address}
+###
+### Core Configuration Settings: WARNING confirm before adoption ##################
+###
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf    
+###
+substitutions:
+### Device Specific Substitutions: Adjust during setup
+### Wiring Substitutions
+# Pin_VCC #Red, Yellow Thin
+# Pin_GND #Black x2
+# Format: Pin_substitutionID22: "GPIO22" #Wiring color
+# Example: Pin_DHT_sensor: "GPIO21" #Green
+### Configuration Parameters
+# Format:  substitutionID: "substitution" #Note
+# Example:  humidity_setpoint_select_low: "65" #Lowest setpoint available in HA
+###
+### Custom Device Configuration ################################################
+###
+### Example sub heading ###################################
+###
+# Stuff here

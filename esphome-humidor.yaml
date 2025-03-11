@@ -31,20 +31,16 @@ substitutions:
 ###
 ### Device Specific Substitutions: Adjust during setup
 ###
-  humidity_setpoint_select_low: "65" #Lowest setpoint available in HA
-  humidity_setpoint_select_high: "75" #Highest setpoint available in HA
+### Wiring
+# Pin_VCC #Red, Yellow Thin
+# Pin_GND #Black x2
   Pin_DHT_sensor: "GPIO21" #Green
   Pin_Fan_PWMinput: "GPIO17" #Blue Thin
   Pin_Fan_RPMoutput: "GPIO16" #Green Thin
+### Configuration Variables
+  humidity_setpoint_select_low: "65" #Lowest setpoint available in HA
+  humidity_setpoint_select_high: "75" #Highest setpoint available in HA
 ###
-### Wiring Notes
-# Pin 21 - Green - DHT sensor
-# Pin 17 - Blue Thin - Fan PWM input
-# Pin 16 - Green Thin - Fan RPM output
-# Pin VCC - Red, Yellow Thin
-# Pin GND - Black x2
-###
-#
 ### Custom Device Configuration ################################################
 #
 ### Home Assistant Input ###################################
