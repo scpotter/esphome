@@ -17,7 +17,7 @@ packages:
 # Connection roubleshooting: Remove commments to override template
 #wifi:
 #  use_address: ${devicename}.local
-#  use_address: ${device_ip_address}
+#  use_address: ${device_ip_address} #set in Template Substitutions above
 ################################################################################
 ###
 ### Device Specific Substitutions: Adjust during setup
