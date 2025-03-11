@@ -1,5 +1,8 @@
 ### Template 2.0
 ###
+#passes tempalate vars into substitution for use in other files
+substitutions:
+  device_namelabel: ${device_namelabel_T} 
 ### Template ESPHome Configuration #############################################
 esphome:
   name: ${devicename}
@@ -26,9 +29,6 @@ wifi:
 captive_portal:
 ###
 ### Template Diagnostic Display ################################################
-###
-substitutions:
-  device_namelabel: ${device_namelabel} #passes tempalate vars to local substitution
 ###
 # Adds Diagnostics to HA
 text_sensor:

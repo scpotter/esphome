@@ -12,7 +12,7 @@ packages:
 ### WARNING Template Substitutions: adjust during setup ########################
       devicename: "esphome-humidor"       #used as mDNS name
       friendly_devicename: "ESP Humidor"  #used in ESP Manager & HA Device
-      device_namelabel: "Humidor"         #used in Entity labels as prefix
+      device_namelabel_T: "Humidor"         #used in Entity labels as prefix
       device_ip_address: "10.0.20.252"    #must be DHCP reserved. For wifi settings changes / mDNS failures
 # Connection roubleshooting: Remove commments to override template
 #wifi:
@@ -22,7 +22,7 @@ packages:
 ###
 ### Device Specific Substitutions: Adjust during setup
 substitutions:
-  device_namelabel: ${device_namelabel} #passes tempalate vars to local substitution
+#  device_namelabel: ${device_namelabel} #passes tempalate vars to local substitution
 # Wiring Substitutions
 # Pin_VCC #Red, Yellow Thin
 # Pin_GND #Black x2
