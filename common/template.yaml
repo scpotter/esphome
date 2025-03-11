@@ -2,7 +2,7 @@
 ###
 #passes tempalate vars into substitution for use in other files
 substitutions:
-  device_namelabel: ${device_namelabel_T} 
+  device_namelabel: ${device_namelabel_T}
 ### Template ESPHome Configuration #############################################
 esphome:
   name: ${devicename}
@@ -34,22 +34,22 @@ captive_portal:
 text_sensor:
   - platform: wifi_info
     ip_address:
-      name: "${device_namelabel}: IP"
+      name: "${device_namelabel_T}: IP"
       icon: "mdi:ip-outline"
     mac_address:
-      name: "${device_namelabel}: MAC"
+      name: "${device_namelabel_T}: MAC"
       icon: "mdi:network-outline"
     ssid:
-      name: "${device_namelabel}: SSID"
+      name: "${device_namelabel_T}: SSID"
       icon: "mdi:wifi-settings"      
 sensor:
   - platform: wifi_signal
-    name: "${device_namelabel}: WiFi Signal"
+    name: "${device_namelabel_T}: WiFi Signal"
     update_interval: 60s
 # Restart & Safe Mode Buttons to HA
 button:
   - platform: restart
-    name: "Restart ${device_namelabel}"
+    name: "Restart ${device_namelabel_T}"
   - platform: safe_mode
     name: "Restart in Safe Mode"
 ### END
