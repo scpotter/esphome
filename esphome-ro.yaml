@@ -26,9 +26,9 @@ substitutions:
 ###
 ### Device Specific Substitutions ##############################################
 # Wiring Substitution
-  # Pin VCC # Yellow
+  # Pin VCC # Red
   # Pin GND # Brown
-  Pin_hx711_dout: "GPIO18"  # Red
+  Pin_hx711_dout: "GPIO18"  # Yellow
   Pin_hx711_clk: "GPIO19"   # Orange
 # Configuration Parameters
   # Format: substitutionID: "substitution" #Note
