@@ -4,7 +4,7 @@ esp32:
   board: esp32dev
   framework:
     type: esp-idf
-### Core Template 2.0 ########################################################
+### Core Template 2.0
 packages:
   template: !include
     file: common/core-template.yaml

@@ -1,87 +1,49 @@
-### Device Basic Configuration ################################################
-### Device Template 1.0
-substitutions:
-  devicename: "esphome-ro"
-  friendly_devicename: "ESP RO"
-#these must be set correctly on adoption
+################################################################################
+### WARNING Core Configuration Settings: confirm before adoption ###############
 esp32:
   board: esp32dev
   framework:
-    type: arduino
-###
-### END
-### Common ESPHome Device Configurations ################################################
-### No or few changes should be needed
-#
-esphome:
-  name: ${devicename}
-  friendly_name: ${friendly_devicename}
-  min_version: 2024.11.0
-  name_add_mac_suffix: false
-# Enable logging
-logger:
-# Enable Home Assistant API and encryption key
-api:
-  encryption: 
-    key: !secret API_key
-# Enable Over The Air updates with ESPhome
-ota:
-  platform: esphome
-# Enable Wifi commented lines are for moving between networks
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
+    type: esp-idf
+### Core Template 2.0
+packages:
+  template: !include
+    file: common/core-template.yaml
+    vars:
+### WARNING Template Substitutions: adjust during setup ########################
+      devicename: "esphome-ro"       #used as mDNS name
+      friendly_devicename: "ESP RO"  #used in ESP Manager & HA Device
+      device_ip_address: "10.0.20.111"  #must be DHCP reserved. For wifi settings changes / mDNS failures
+### Troubleshooting wifi: Remove commments to override template
+#wifi:
 #  use_address: ${devicename}.local
-#  use_address: 10.0.20.111
-#
-# Enable fallback hotspot & captive portal in case wifi connection fails >1 minute
-  ap:
-    ssid: ${devicename}
-    password: !secret ESPadmin_password
-captive_portal:
-
-### Common Diagnostic Display Configuration ################################################
-# Adds Diagnostics to HA
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      name: "${friendly_devicename}: IP"
-      icon: "mdi:ip-outline"
-    mac_address:
-      name: "${friendly_devicename}: MAC"
-      icon: "mdi:network-outline"
-    ssid:
-      name: "${friendly_devicename}: SSID"
-      icon: "mdi:wifi-settings"      
-### Moved to custom
-#sensor:
-#  - platform: wifi_signal
-#    name: "${friendly_devicename}: WiFi Signal"
-#    update_interval: 60s
-# Restart & Safe Mode Buttons to HA
-button:
-  - platform: restart
-    name: "Restart Device"
-  - platform: safe_mode
-    name: "Restart in Safe Mode"
-
+#  use_address: ${device_ip_address} #set in Template Substitutions above
+###
+substitutions:
+### WARNING Naming Substituion: Adjust during setup ############################
+  device_namelabel: "RO"
+### END Core Template
+################################################################################
+###
+### Device Specific Substitutions ##############################################
+# Wiring Substitution
+  # Pin VCC # Yellow
+  # Pin GND # Brown
+  Pin_hx711_dout: "GPIO18"  # Red
+  Pin_hx711_clk: "GPIO19"   # Orange
+# Configuration Parameters
+  # Format: substitutionID: "substitution" #Note
+  # Example: humidity_setpoint_select_low: "65" #Lowest setpoint available in HA
+###
 ### Custom Device Configuration ################################################
-# Wiring
-# Pin 18 - Red
-# Pin 19 - Orange
-# Pin GND - Brown
-# Pin VCC - Yellow
+###
+### Weight of reserve tank #########################################
+# Logs approximate weight in lbs
 sensor:
-  ### Moved Here From Template
-  - platform: wifi_signal
-    name: "${friendly_devicename}: WiFi Signal"
-    update_interval: 60s
-  #Approximate weight for logging ##############################################
   - platform: hx711
-    name: "RO Weight"
     id: RO_lbs
-    dout_pin: 18
-    clk_pin: 19
+    name: "RO Weight"
+    dout_pin: ${Pin_hx711_dout}
+    clk_pin: ${Pin_hx711_clk}
     gain: 128
     filters:
       - calibrate_linear:
@@ -98,14 +60,15 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     update_interval: 1s
-  ## Automation for setting binary sensor
-      # Empty range = 8.3 (garunteed) to 8.5 (likely) lbs OLD
-      # Empty range = 7.0 (garunteed) to 7.5 (likely) lbs NEW CALIBRATION
-    ### running false = < 7.6 lbs
-      # Typical refill = 5.3 (low) to 5.5 (higher) lbs
-      # Max refill seen = 11.3 lbs, assumes high pressure tank is empty
-    ### running true = > 14.0
-      # Typical refill 5.5 + likely empty 7.5 = 13.0 lbs
+### Enables/disables pump based on lbs #############################
+### Automation for setting binary sensor
+# Empty range = 8.3 (garunteed) to 8.5 (likely) lbs OLD
+# Empty range = 7.0 (garunteed) to 7.5 (likely) lbs NEW CALIBRATION
+### running false = < 7.6 lbs
+# Typical refill = 5.3 (low) to 5.5 (higher) lbs
+# Max refill seen = 11.3 lbs, assumes high pressure tank is empty
+### running true = > 14.0
+# Typical refill 5.5 + likely empty 7.5 = 13.0 lbs
     on_value:
       then:
       - if:
@@ -114,29 +77,19 @@ sensor:
               id: RO_lbs
               below: 7.7
           then:
-            lambda: !lambda id(RO_binary).publish_state(false);
-#            lambda: !lambda id(RO_global).publish_state(false);
+            lambda: !lambda id(RO_reserve).publish_state(false);
       - if:
           condition:
             sensor.in_range:
               id: RO_lbs
               above: 13
           then:
-            lambda: !lambda id(RO_binary).publish_state(true);
-#            lambda: !lambda id(RO_global).publish_state(false);
-#  # set OTHERWISE and apply globale to 
-#            lambda: !lambda id(RO_binary).publish_state(id(RO_global.state));
-
+            lambda: !lambda id(RO_reserve).publish_state(true);
+#
+### Sensor indictating RO Reserve ##################################
+# HA uses this to enable/disable pump
 binary_sensor:
- #Binary state for triggering pump #############################################
   - platform: template
-    name: "RO Level"
-    id: RO_binary
+    name: "RO Has Reserve"
+    id: RO_reserve
     device_class: running
-
-globals:
- #Global to store default used on reboot #######################################
-   - id: RO_default
-     type: bool
-     restore_value: no
-     initial_value: 'true'
