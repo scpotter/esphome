@@ -2,7 +2,7 @@
 ###
 #passes tempalate vars into substitution for use in other files
 substitutions:
-  device_namelabel: ${device_namelabel_T}
+  device_namelabel: "${device_namelabel_T}"
 ### Template ESPHome Configuration #############################################
 esphome:
   name: ${devicename}
