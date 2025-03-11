@@ -4,28 +4,31 @@ esp32:
   board: esp32dev
   framework:
     type: esp-idf
-### Device Template 2.0 ##################################################
+### Core Template 2.0 ########################################################
 packages:
   template: !include
-    file: common/template.yaml
+    file: common/core-template.yaml
     vars:
 ### WARNING Template Substitutions: adjust during setup ########################
       devicename: "esphome-blank"       #used as mDNS name
       friendly_devicename: "ESP Blank"  #used in ESP Manager & HA Device
-      device_namelabel: "blank"         #used in Entity labels as prefix
       device_ip_address: "10.0.20.666"  #must be DHCP reserved. For wifi settings changes / mDNS failures
-# Connection roubleshooting: Remove commments to override template
+### Troubleshooting wifi: Remove commments to override template
 #wifi:
 #  use_address: ${devicename}.local
 #  use_address: ${device_ip_address} #set in Template Substitutions above
+###
+substitutions:
+### WARNING Naming Substituion: Adjust during setup ############################
+  device_namelabel: "Blank"
+### END Core Template
 ################################################################################
 ###
-### Device Specific Substitutions: Adjust during setup
-substitutions:
-# Wiring Substitutions
-  # Pin_VCC #Red, Yellow Thin
-  # Pin_GND #Black x2
-  Pin_substitutionID22: "GPIO22" #Wiring color
+### Device Specific Substitutions ##############################################
+# Wiring Substitution
+# Pin_VCC #Red
+# Pin_GND #Black
+  # Format: PinLabel: "GPIO#" #Wire color(s)
   # Example: Pin_DHT_sensor: "GPIO21" #Green
 # Configuration Parameters
   # Format: substitutionID: "substitution" #Note
