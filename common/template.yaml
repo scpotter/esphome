@@ -27,6 +27,9 @@ captive_portal:
 ###
 ### Template Diagnostic Display ################################################
 ###
+substitutions:
+  device_namelabel: ${device_namelabel} #passes tempalate vars to local substitution
+###
 # Adds Diagnostics to HA
 text_sensor:
   - platform: wifi_info

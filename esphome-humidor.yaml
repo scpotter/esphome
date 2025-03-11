@@ -22,6 +22,7 @@ packages:
 ###
 ### Device Specific Substitutions: Adjust during setup
 substitutions:
+#  device_namelabel: ${device_namelabel} #passes tempalate vars to local substitution
 # Wiring Substitutions
 # Pin_VCC #Red, Yellow Thin
 # Pin_GND #Black x2
