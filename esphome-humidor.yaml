@@ -1,48 +1,39 @@
-### Device Hardware Configuration ################################################
-###
-### Apply Device Template 2.0 ####################################################
-packages:
-  template: !include
-    file: common/template.yaml
-    vars:
-      devicename: ${devicename}
-      friendly_devicename: ${friendly_devicename}
-      device_namelabel: ${device_namelabel}
-      device_ip_address: ${device_ip_address}
-# Connection roubleshooting: Remove commments to override template
-#wifi:
-#  use_address: ${devicename}.local
-#  use_address: ${device_ip_address}
-###
-### Core Configuration Settings: WARNING confirm before adoption ##################
-###
+################################################################################
+### WARNING Core Configuration Settings: confirm before adoption ###############
 esp32:
   board: esp32dev
   framework:
     type: esp-idf    
-###
-### Template Substitutions: Adjust during setup ###################################
-###
-substitutions:
-  devicename: "esphome-humidor"       #used as mDNS name
-  friendly_devicename: "ESP Humidor"  #used in ESP Manager & HA Device
-  device_namelabel: "Humidor"         #used in Entity labels as prefix
-  device_ip_address: "10.0.20.252"    #must be DHCP reserved. For wifi settings changes / mDNS failures
+### Device Template 2.0 ##################################################
+packages:
+  template: !include
+    file: common/template.yaml
+    vars:
+### WARNING Template Substitutions: adjust during setup ########################
+      devicename: "esphome-humidor"       #used as mDNS name
+      friendly_devicename: "ESP Humidor"  #used in ESP Manager & HA Device
+      device_namelabel: "Humidor"         #used in Entity labels as prefix
+      device_ip_address: "10.0.20.252"    #must be DHCP reserved. For wifi settings changes / mDNS failures
+# Connection roubleshooting: Remove commments to override template
+#wifi:
+#  use_address: ${devicename}.local
+#  use_address: ${device_ip_address}
+################################################################################
 ###
 ### Device Specific Substitutions: Adjust during setup
-###
-### Wiring
+substitutions:
+# Wiring Substitutions
 # Pin_VCC #Red, Yellow Thin
 # Pin_GND #Black x2
   Pin_DHT_sensor: "GPIO21" #Green
   Pin_Fan_PWMinput: "GPIO17" #Blue Thin
   Pin_Fan_RPMoutput: "GPIO16" #Green Thin
-### Configuration Variables
+# Configuration Parameters
   humidity_setpoint_select_low: "65" #Lowest setpoint available in HA
   humidity_setpoint_select_high: "75" #Highest setpoint available in HA
 ###
 ### Custom Device Configuration ################################################
-#
+###
 ### Home Assistant Input ###################################
 #
 globals:
