@@ -71,20 +71,46 @@ number:
 #
 # NOTE: currently binary on/off swtich.
 #
-switch:
-  - platform: gpio
-    pin: "${Pin_Fan_PWMinput}"
-    id: humidor_fan
-    name: "${device_namelabel} Fan Power"
-#
-# DRAFT: Fan platform to use PWM for speed control. Replaces switch above, requires modifing DHT automation
-#
-# Pin 17 - Blue Thin - Fan PWM input
-#output:
-#  - platform: ledc
+#switch:
+#  - platform: gpio
 #    pin: "${Pin_Fan_PWMinput}"
-#    frequency: 10000 Hz
+#    id: humidor_fan
+#    name: "${device_namelabel} Fan Power"
+#
+# If you turn this on, you can manually set the fan speed.
+# The PID will be ignored. This is done via the proxy_output.
+#
+fan:
+  - platform: speed
+    id: manual_fan_control
+    output: proxy_output
+    name: "${device_namelabel} Fan Speed"
+#
+output:
+  - platform: ledc
+    pin: "${Pin_Fan_PWMinput}"
+    id: console_fan_speed ###### Change this
 #    id: humidor_fan_pwm
+    frequency: "25000 Hz"   # 25KHz is standard PC fan frequency, minimises buzzing
+#    min_power: 13%     # find/configure this
+    zero_means_zero: true     # At 0, actually turn fan off
+  # This proxy output takes its input
+  # if the manual fan control is on, use the level from that
+  # otherwise use the PID control value.
+  # Then publish the result to the fan (ledc) and 
+  # also publish to the template output sensor
+  - platform: template
+    id: proxy_output
+    type: float
+    write_action:
+      lambda: |-
+        float write_val = 
+          (id(manual_fan_control).state) ?
+            id(manual_fan_control).speed / 100.0 : state*1.0;
+        id(console_fan_speed).set_level(write_val);
+#        id(fan_speed_pwm_voltage).publish_state(write_val*100.0);
+#### this is disabled until implementing the PWM portion
+
 #fan:
 #  - platform: speed
 #    output: humidor_fan_pwm
@@ -119,12 +145,16 @@ sensor:
       on_value_range:
         - above: 70.1
           then:
-            - switch.turn_off:
-                id: humidor_fan
+            - fan.turn_on:
+                id: manual_fan_control
+#            - switch.turn_off:
+#                id: humidor_fan
         - below: 68.9
           then:
-            - switch.turn_on:
-                id: humidor_fan
+            - fan.turn_off:
+                id: manual_fan_control
+#            - switch.turn_on:
+#                id: humidor_fan
     update_interval: 15s
 ##
 ###  Control State #1 Running: PID Contoller #######################################
