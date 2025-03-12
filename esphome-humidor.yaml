@@ -37,35 +37,52 @@ substitutions:
 ###
 ### Custom Device Configuration ################################################
 ###
-### Home Assistant Input ###################################
+### Configutation Outline
+###
+### Control Components
+###  # Humidor Set Points
+###  # Humidor Climate Sensors
+###  # Humidor Climate Output: PWM Fan using LEDC
+### Control states
+###  # the humidor will always be in one of three states. these can be built independently and modularized 
+###  # 1: Running: PID Contoller
+###  # 2: Paused (Lid is Open): Automations
+###  # 3: Stopped: (Error or mainenance state) Automations
+###
+### END Outline
 #
-globals:
-  - id: global_humidity_setpoint
-    type: float
-    restore_value: True
-    initial_value: '70'
+### Humidor Set Points #############################################
+# Accepts Home Assistant Input
+#
+####### NEEDS CLEANUP
 #
 number:
   - platform: template
     id: humidity_setpoint
     name: "Humidity Setpoint"
     optimistic: true   #### not sure this is correct
-    initial_value: 70
+    initial_value: 70 # make variable?
     min_value: ${humidity_setpoint_select_low}
     max_value: ${humidity_setpoint_select_high}
     step: 0.1
     restore_value: True
+# Stores the template number in a global as Float. Unclear if / why is this is needed. 
+# added when attempting to dynmacally control the fan switch automation. won't be needed with PID
     on_value:
       then:
         - lambda: |-
             id(global_humidity_setpoint) = float(x);
+# delete this?
+# seems like this 
+globals:
+  - id: global_humidity_setpoint
+    type: float
+    restore_value: True
+    initial_value: '70'
 #
-#  - platform: homeassistant
-#    name: "Humidity Set"
-#    id: humidity_setpoint
-#    entity_id: input_number.humidor_level
+### Humidor Climate Sensors ########################################
 #
-### Humidor Climate Monitoring ###################################
+####### NEEDS CLEANUP
 #
 sensor:
   - platform: dht
@@ -75,13 +92,10 @@ sensor:
     humidity:
       name: "${device_namelabel} Humidity"
       id: humidity
-### Humidor Fan Automation ###################################
-### Enhancements in progress:
-###   Change to PID function: https://esphome.io/components/climate/pid
-# Enhancements mostly done:
+# Contains current fan automations. Refactor this into PID Controller
+# Enhancements to abandon:
 #   Add HA controllable set point
 #   Tweak +-Deadband to better fit with sensor specs, at least 1 degree 
-# Enhancements to consider:
 #   Global default fan to off?
 #   Add initial power on update followed by less frequent intervals?
       on_value_range:
@@ -96,17 +110,10 @@ sensor:
             - switch.turn_on:
                 id: humidor_fan
     update_interval: 15s
-### Detect low humidity and notify ###################################
 #
-# Fan running without humidity rising?
-# Humidity below a threshold? Will opening trigger a false alarm?
-# Stop running fan at full speed until refilled?
-#
-### Cigar Fan Control ###################################
+### Climate Output: PWM Fan using LEDC ###################################
 #
 # NOTE: currently binary on/off swtich.
-#
-# Pin 17 - Blue Thin - Fan PWM input
 switch:
   - platform: gpio
     pin: "${Pin_Fan_PWMinput}"
@@ -118,7 +125,7 @@ switch:
 # Pin 17 - Blue Thin - Fan PWM input
 #output:
 #  - platform: ledc
-#    pin: GPIO17
+#    pin: "${Pin_Fan_PWMinput}"
 #    frequency: 10000 Hz
 #    id: humidor_fan_pwm
 #fan:
@@ -126,7 +133,7 @@ switch:
 #    output: humidor_fan_pwm
 #    name: "${device_namelabel} Fan PWM"
 #
-# DRAFT: Monitor fan RPM. Is this meaningfully different from PWM setting other than troubleshooting?
+#### DRAFT: Monitor fan RPM. Is this meaningfully different from PWM setting other than troubleshooting?
 # Pin 16 - Green Thin - Fan RPM output
 # Use pulse counter?
 #
@@ -135,4 +142,18 @@ switch:
 #   The fan sends two impulses per revolution
 #   Fan speeds are usually in RPM (= per minute)
 #   Formula: RPM = herz (per second) / 2 pulses * 60 seconds
-##  If using a pulsecounter can it just be diveded by 2?
+#  If using a pulsecounter can it just be diveded by 2?
+#
+#
+###  Control State #1 Running: PID Contoller #######################################
+# New home of the PID logic
+#   Change to PID function: https://esphome.io/components/climate/pid
+#
+###  Control State #2 Paused #######################################
+#
+#
+###  Control State #3 Stopped ######################################
+#
+# Fan running without humidity rising?
+# Humidity below a threshold? Will opening trigger a false alarm?
+# Stop running fan at full speed until refilled?
