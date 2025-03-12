@@ -145,13 +145,13 @@ sensor:
       on_value_range:
         - above: 70.1
           then:
-            - fan.turn_on:
+            - fan.turn_off:
                 id: manual_fan_control
 #            - switch.turn_off:
 #                id: humidor_fan
         - below: 68.9
           then:
-            - fan.turn_off:
+            - fan.turn_on:
                 id: manual_fan_control
 #            - switch.turn_on:
 #                id: humidor_fan
