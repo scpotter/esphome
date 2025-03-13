@@ -4,8 +4,25 @@ esp32:
   board: esp32dev
   framework:
     type: esp-idf
-### Core Template 2.0
+### Core Template 2.1
 packages:
+################################################################################
+### Custome packagages NON TEMPLATE
+### 
+###   Control Components
+###  # Humidor Set Points: HA configurable
+  
+###  # Humidor Climate Output: PWM Fan using LEDC
+  climate_output: !include humidor-build/climate-output.yaml
+###  # Humidor Climate Sensors: DHT22
+  climate_sensors: !include humidor-build/climate-sensors.yaml
+### Control states ----- (currently blank)
+###  # the humidor will always be in one of three states. these can be built independently and modularized 
+###  # 1: Running: PID Contoller      ****WIP****
+###  # 2: Paused (Lid is Open): Automations
+###  # 3: Stopped: (Error or mainenance state) Automations
+###
+################################################################################
   template: !include
     file: common/core-template.yaml
     vars:
@@ -37,20 +54,6 @@ substitutions:
 ###
 ### Custom Device Configuration ################################################
 ###
-### Configutation Outline
-###
-### Control Components
-###  # Humidor Set Points
-###  # Humidor Climate Output: PWM Fan using LEDC      ****WIP****
-###  # Humidor Climate Sensors
-### Control states ----- (currently blank)
-###  # the humidor will always be in one of three states. these can be built independently and modularized 
-###  # 1: Running: PID Contoller
-###  # 2: Paused (Lid is Open): Automations
-###  # 3: Stopped: (Error or mainenance state) Automations
-###
-### END Outline
-#
 ### Humidor Set Points #############################################
 # Accepts Home Assistant Input
 #
@@ -67,96 +70,7 @@ number:
     step: 0.1
     restore_value: True
 #
-### Climate Output: PWM Fan using LEDC #############################
 #
-# NOTE: currently binary on/off swtich.
-#
-#switch:
-#  - platform: gpio
-#    pin: "${Pin_Fan_PWMinput}"
-#    id: humidor_fan
-#    name: "${device_namelabel} Fan Power"
-#
-# If you turn this on, you can manually set the fan speed.
-# The PID will be ignored. This is done via the proxy_output.
-#
-fan:
-  - platform: speed
-    id: manual_fan_control
-    output: proxy_output
-    name: "${device_namelabel} Fan Speed"
-#
-output:
-  - platform: ledc
-    pin: "${Pin_Fan_PWMinput}"
-    id: console_fan_speed ###### Change this
-#    id: humidor_fan_pwm
-    frequency: "25000 Hz"   # 25KHz is standard PC fan frequency, minimises buzzing
-#    min_power: 13%     # find/configure this
-    zero_means_zero: true     # At 0, actually turn fan off
-  # This proxy output takes its input
-  # if the manual fan control is on, use the level from that
-  # otherwise use the PID control value.
-  # Then publish the result to the fan (ledc) and 
-  # also publish to the template output sensor
-  - platform: template
-    id: proxy_output
-    type: float
-    write_action:
-      lambda: |-
-        float write_val = 
-          (id(manual_fan_control).state) ?
-            id(manual_fan_control).speed / 100.0 : state*1.0;
-        id(console_fan_speed).set_level(write_val);
-#        id(fan_speed_pwm_voltage).publish_state(write_val*100.0);
-#### this is disabled until implementing the PWM portion
-
-#fan:
-#  - platform: speed
-#    output: humidor_fan_pwm
-#    name: "${device_namelabel} Fan PWM"
-#
-### Fan RPM sensor (Tachometer)
-# May not be meaningfully different from PWM input besides troubleshooting
-sensor:
-  - platform: pulse_counter
-    pin: 
-      number: ${Pin_Fan_RPMoutput}
-      mode: INPUT_PULLUP
-    unit_of_measurement: 'RPM'
-    id: fan_speed
-    name: "$device_namelabel Fan RPM"
-    accuracy_decimals: 0
-    filters:
-      - multiply: 0.5  # Noctua fans send two pulses per revolution, so divide by 5.
-#
-### Humidor Climate Sensors ########################################
-#
-  - platform: dht
-    pin: "${Pin_DHT_sensor}"
-    temperature:
-      name: "${device_namelabel} Temperature"
-    humidity:
-      name: "${device_namelabel} Humidity"
-      id: humidity
-#
-####### NEEDS CLEANUP # Contains current fan automations. Refactor this into PID Controller
-#
-      on_value_range:
-        - above: 70.1
-          then:
-            - fan.turn_off:
-                id: manual_fan_control
-#            - switch.turn_off:
-#                id: humidor_fan
-        - below: 68.9
-          then:
-            - fan.turn_on:
-                id: manual_fan_control
-#            - switch.turn_on:
-#                id: humidor_fan
-    update_interval: 15s
-##
 ###  Control State #1 Running: PID Contoller #######################################
 # New home of the PID logic
 #   Change to PID function: https://esphome.io/components/climate/pid

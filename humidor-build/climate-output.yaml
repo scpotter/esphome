@@ -1,0 +1,49 @@
+### Climate Output: PWM Fan using LEDC #############################
+#
+# Manual fan control for on/off and speed%. Useful for testing. Overrides the proxy_fan_output set by the PID
+fan:
+  - platform: speed
+    id: manual_fan_control
+    output: proxy_fan_output      ####consider renaming this?
+    name: "${device_namelabel} Fan"
+#
+#  PWM signal that directly drives the fan. Set by proxy_fan_output.
+output:
+  - platform: ledc
+    pin: "${Pin_Fan_PWMinput}"
+    id: humidor_fan_output
+    frequency: "25000 Hz"   # Noctua lists 25KHz as target, 21-28k acceptable
+    min_power: 9%           # 7% does nothing, 9% does. Not sure of 8%
+    zero_means_zero: true   # At 0, actually turn fan off
+#
+# Proxy allowing multiple inputs/outputs for the PWM signal.
+#   Set by either PID or manual control. Manual input overrides PID.
+#   Publishes fan output to ledc (PWM) which drives the fan and to a sensor for HA. Note these use different units.
+  - platform: template
+    id: proxy_fan_output
+    type: float
+    write_action:
+      lambda: |-
+        float write_val = 
+          (id(manual_fan_control).state) ?
+            id(manual_fan_control).speed / 100.0 : state*1.0;
+        id(humidor_fan_output).set_level(write_val);
+        id(display_fan_output).publish_state(write_val*100.0);
+#
+sensor:
+# Expose proxy_fan_output as fan output in HA
+  - platform: template
+    name: "${device_namelabel} Fan Output"
+    id: display_fan_output
+    unit_of_measurement: "%"
+# Expose Fan RPM (Tachometer) to HA
+#   May not be meaningfully different from PWM input besides troubleshooting
+  - platform: pulse_counter
+    pin: 
+      number: ${Pin_Fan_RPMoutput}
+      mode: INPUT_PULLUP
+    name: "$device_namelabel Fan RPM"
+    unit_of_measurement: 'RPM'
+    accuracy_decimals: 0
+    filters:
+      - multiply: 0.5  # Noctua fans send two pulses per revolution, so divide by 5.

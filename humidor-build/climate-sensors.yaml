@@ -1,0 +1,21 @@
+### Humidor Climate Sensors ########################################
+sensor:
+  - platform: dht
+    pin: "${Pin_DHT_sensor}"
+    temperature:
+      name: "${device_namelabel} Temperature"
+    humidity:
+      name: "${device_namelabel} Humidity"
+      id: humidity
+######## NEEDS CLEANUP  Automates fan power on/off. Refactor this into PID Controller
+      on_value_range:
+        - above: 70.1
+          then:
+            - fan.turn_off:
+                id: manual_fan_control
+        - below: 68.9
+          then:
+            - fan.turn_on:
+                id: manual_fan_control
+      # end cleanup
+    update_interval: 3s
