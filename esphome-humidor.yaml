@@ -89,9 +89,9 @@ number:
     name: kp
     icon: mdi:chart-bell-curve
     restore_value: true
-    initial_value: 0.3
+    initial_value: 0.15
     min_value: 0
-    max_value: 50
+    max_value: 1
     step: 0.001
     optimistic: true
     set_action: 
@@ -105,7 +105,7 @@ number:
     restore_value: true
     initial_value: 0.0015
     min_value: 0
-    max_value: 50
+    max_value: 1
     step: 0.0001
     optimistic: true
     set_action: 
@@ -124,45 +124,47 @@ number:
     set_action: 
       lambda: id(console_thermostat).set_kd( x );
 
+#### Removed deadband
+
   # Set threshold high
-  - platform: template
-    name: Deadband Threshold High
-    icon: mdi:chart-bell-curve
-    restore_value: true
-    initial_value: 0.4
-    min_value: 0
-    max_value: 20
-    step: 0.1
-    optimistic: true
-    set_action: 
-      lambda: id(console_thermostat).set_threshold_high( x );
+#  - platform: template
+#    name: Deadband Threshold High
+#    icon: mdi:chart-bell-curve
+#    restore_value: true
+#    initial_value: 0.4
+#    min_value: 0
+#    max_value: 20
+#    step: 0.1
+#    optimistic: true
+#    set_action: 
+#      lambda: id(console_thermostat).set_threshold_high( x );
 
   # Set threshold low
-  - platform: template
-    name: Deadband Threshold Low
-    icon: mdi:chart-bell-curve
-    restore_value: true
-    initial_value: -1.0
-    min_value: -20
-    max_value: 0
-    step: 0.1
-    optimistic: true
-    set_action: 
-      lambda: id(console_thermostat).set_threshold_low( x );
+#  - platform: template
+#    name: Deadband Threshold Low
+#    icon: mdi:chart-bell-curve
+#    restore_value: true
+#    initial_value: -1.0
+#    min_value: -20
+#    max_value: 0
+#    step: 0.1
+#    optimistic: true
+#    set_action: 
+#      lambda: id(console_thermostat).set_threshold_low( x );
 
 
   # Set ki multiplier
-  - platform: template
-    name: Deadband ki Multiplier
-    icon: mdi:chart-bell-curve
-    restore_value: true
-    initial_value: 0.04
-    min_value: 0
-    max_value: .2
-    step: 0.01
-    optimistic: true
-    set_action: 
-      lambda: id(console_thermostat).set_ki_multiplier( x );
+#  - platform: template
+#    name: Deadband ki Multiplier
+#    icon: mdi:chart-bell-curve
+#    restore_value: true
+#    initial_value: 0.04
+#    min_value: 0
+#    max_value: .2
+#    step: 0.01
+#    optimistic: true
+#    set_action: 
+#      lambda: id(console_thermostat).set_ki_multiplier( x );
 
 # Dispaly actual PID values in HA
 
@@ -197,15 +199,14 @@ sensor:
     name: PID error value
     id: e_term
     accuracy_decimals: 2
-
-  - platform: template
-    name: PID deadband active
-    id: in_deadband_term
-    accuracy_decimals: 0
+  # remove deadband related
+#  - platform: template
+#    name: PID deadband active
+#    id: in_deadband_term
+#    accuracy_decimals: 0
 
 
 # Expose a PID-controlled Thermostat
-# Manual: https://esphome.io/components/climate/pid.html
 climate:
   - platform: pid
     name: "Console Fan Thermostat"
@@ -232,37 +233,41 @@ climate:
       - sensor.template.publish:
           id: o_term
           state: !lambda 'return -id(console_thermostat).get_output_value()* 100.0;'
-      - sensor.template.publish:
-          id: in_deadband_term
-          state: !lambda 'return id(console_thermostat).in_deadband();'
-      - sensor.template.publish:
-          id: e_term
-          state: !lambda 'return -id(console_thermostat).get_error_value();'
-        
-    # The extents of the HA Thermostat
+  # removed deadband related sensors
+#      - sensor.template.publish:
+#          id: in_deadband_term
+#          state: !lambda 'return id(console_thermostat).in_deadband();'
+#      - sensor.template.publish:
+#          id: e_term
+#          state: !lambda 'return -id(console_thermostat).get_error_value();'
+
+######          VISUAL THERMOSTAT CONTROL
+# The extents of the HA Thermostat
     visual:
-      min_temperature: 20 °C
-      max_temperature: 50 °C
-  
+      min_temperature: 60 °C
+      max_temperature: 80 °C
+######          VISUAL THERMOSTAT CONTROL
+
     # See the README for setting up these parameters.
     # These are over ridden by the number templates above.
+    # Currently the defaults match
     control_parameters:
-      kp: 0.3
+      kp: 0.15
       ki: 0.0015
       kd: 0
 
-      max_integral: 0.0
+# may not keep this
       output_averaging_samples: 1
-      derivative_averaging_samples: 5
 
+#### Removed Deadband #### CLEANUP
     # How to behave when close to the target temperature?
-    deadband_parameters:
-      threshold_high: 0.4°C
-      threshold_low: -1.0°C
-      kp_multiplier: 0.0
-      ki_multiplier: 0.04
-      kd_multiplier: 0.0
-      deadband_output_averaging_samples: 15
+#    deadband_parameters:
+#      threshold_high: 0.0°C
+#      threshold_low: 0.0°C
+#      kp_multiplier: 0.0
+#      ki_multiplier: 0.04
+#      kd_multiplier: 0.0
+#      deadband_output_averaging_samples: 15
 #
 #
 ###  Control State #2 Paused #######################################

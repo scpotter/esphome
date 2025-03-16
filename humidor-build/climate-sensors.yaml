@@ -7,6 +7,7 @@ sensor:
     humidity:
       name: "${device_namelabel} Humidity"
       id: humidity
+      accuracy_decimals: 1
 ######## NEEDS CLEANUP  Automates fan power on/off. Refactor this into PID Controller
 #      on_value_range:
 #        - above: 70.1
