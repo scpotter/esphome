@@ -1,0 +1,21 @@
+#### Humidor Set Points #############################################
+#
+# Accepts Home Assistant Input
+#
+
+# Example configuration entry
+number:
+  - platform: template
+    id: humidity_setpoint
+    name: "Humidity Setpoint"
+    optimistic: true
+    initial_value: 70 # make variable?
+    min_value: ${humidity_setpoint_select_low}
+    max_value: ${humidity_setpoint_select_high}
+    step: 0.1
+    restore_value: True
+    set_action: 
+      lambda: |- 
+        auto call = id(console_thermostat).make_call();
+        call.set_target_temperature(x);
+        call.perform();

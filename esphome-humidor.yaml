@@ -7,22 +7,32 @@ esp32:
 ### Core Template 2.1
 packages:
 ################################################################################
-### Custome packagages NON TEMPLATE
+### Custom packagages NON TEMPLATE
 ### 
-###   Control Components
+### Control Components ###################
+###
 ###  # Humidor Set Points: HA configurable
-  
+  climate_target: !include humidor-build/climate-setpoint.yaml
+  # Exposes target humidity set point and sends to PID
 ###  # Humidor Climate Output: PWM Fan using LEDC
-###      # pull out manual fan control or make optinoal?
   climate_output: !include humidor-build/climate-output.yaml
+  # Exposes output and RPM has option for manual over-ride
 ###  # Humidor Climate Sensors: DHT22
   climate_sensors: !include humidor-build/climate-sensors.yaml
-### Control states ----- (currently blank)
-###  # the humidor will always be in one of three states. these can be built independently and modularized 
-###  # 1: Running: PID Contoller
-###     # Include Initial Engine Tuning in HA
+  # Exposes humidity and temp
+###
+### Control States ###################
+###
+###  Running State: PID Contoller Active
+  PID_controller: !include humidor-build/PID_controller.yaml
+  # PID function to control climate. Exposes algorithm terms as sensors
+  PID_tuning: !include humidor-build/PID_controller_tuning.yaml
+  # Optional: Comment/uncomment package to remove/include
+  # Exposes algorithm terms as controls for tuning.
 ###  # 2: Paused (Lid is Open): Automations
+  #
 ###  # 3: Stopped: (Error or mainenance state) Automations
+  #
 ###
 ################################################################################
   template: !include
@@ -37,8 +47,7 @@ packages:
 #  use_address: ${devicename}.local
 #  use_address: ${device_ip_address} #set in Template Substitutions above
 ###
-substitutions:
-### WARNING Naming Substituion: Adjust during setup ############################
+substitutions: ### WARNING Naming Substituion: Adjust during setup ############################
   device_namelabel: "Humidor"
 ### END Core Template
 ################################################################################
@@ -56,221 +65,12 @@ substitutions:
 ###
 ### Custom Device Configuration ################################################
 ###
-### Humidor Set Points #############################################
-# Accepts Home Assistant Input
+###  Control State #1 Running: PID Contoller ###################################
 #
-number:
-  - platform: template
-    id: humidity_setpoint
-    name: "Humidity Setpoint"
-    optimistic: true
-    initial_value: 70 # make variable?
-    min_value: ${humidity_setpoint_select_low}
-    max_value: ${humidity_setpoint_select_high}
-    step: 0.1
-    restore_value: True
-#    set_action: 
-#      lambda: |- 
-#        id(console_thermostat).default_target_temperature_( x );
-#
-###  Control State #1 Running: PID Contoller #######################################
-#
-# Accept HA input PID tuning
-
-  ## OPTIONAL:
-  # RECEIVE KP, KI and KD parameters from input_text.kx helpers in 
-  # Home Assistant. See the PID controller below
-  # These helper values will get saved to flash thus permanently over-riding 
-  # the initial values set in the PID below.
-
-#  number:
-  # KP
-  - platform: template
-    name: kp
-    icon: mdi:chart-bell-curve
-    restore_value: true
-    initial_value: 0.15
-    min_value: 0
-    max_value: 1
-    step: 0.001
-    optimistic: true
-    set_action: 
-      lambda: |- 
-        id(console_thermostat).set_kp( x );
-
-  # KI
-  - platform: template
-    name: ki
-    icon: mdi:chart-bell-curve
-    restore_value: true
-    initial_value: 0.0015
-    min_value: 0
-    max_value: 1
-    step: 0.0001
-    optimistic: true
-    set_action: 
-      lambda: id(console_thermostat).set_ki( x );
-
-  # KD
-  - platform: template
-    name: kd
-    icon: mdi:chart-bell-curve
-    restore_value: true
-    initial_value: 0.0
-    min_value: -50
-    max_value: 50
-    step: 0.001
-    optimistic: true
-    set_action: 
-      lambda: id(console_thermostat).set_kd( x );
-
-#### Removed deadband
-
-  # Set threshold high
-#  - platform: template
-#    name: Deadband Threshold High
-#    icon: mdi:chart-bell-curve
-#    restore_value: true
-#    initial_value: 0.4
-#    min_value: 0
-#    max_value: 20
-#    step: 0.1
-#    optimistic: true
-#    set_action: 
-#      lambda: id(console_thermostat).set_threshold_high( x );
-
-  # Set threshold low
-#  - platform: template
-#    name: Deadband Threshold Low
-#    icon: mdi:chart-bell-curve
-#    restore_value: true
-#    initial_value: -1.0
-#    min_value: -20
-#    max_value: 0
-#    step: 0.1
-#    optimistic: true
-#    set_action: 
-#      lambda: id(console_thermostat).set_threshold_low( x );
-
-
-  # Set ki multiplier
-#  - platform: template
-#    name: Deadband ki Multiplier
-#    icon: mdi:chart-bell-curve
-#    restore_value: true
-#    initial_value: 0.04
-#    min_value: 0
-#    max_value: .2
-#    step: 0.01
-#    optimistic: true
-#    set_action: 
-#      lambda: id(console_thermostat).set_ki_multiplier( x );
-
-# Dispaly actual PID values in HA
-
-###############################################
-# START THE FAN CONTROLLER SETUP
-sensor:
-  - platform: template
-    name: PID p term
-    id: p_term
-    unit_of_measurement: "%"
-    accuracy_decimals: 2
-
-  - platform: template
-    name: PID i term
-    id: i_term
-    unit_of_measurement: "%"
-    accuracy_decimals: 2
-
-  - platform: template
-    name: PID d term
-    id: d_term
-    unit_of_measurement: "%"
-    accuracy_decimals: 2
-
-  - platform: template
-    name: PID output value
-    unit_of_measurement: "%"
-    id: o_term
-    accuracy_decimals: 2
-
-  - platform: template
-    name: PID error value
-    id: e_term
-    accuracy_decimals: 2
-  # remove deadband related
-#  - platform: template
-#    name: PID deadband active
-#    id: in_deadband_term
-#    accuracy_decimals: 0
-
-
-# Expose a PID-controlled Thermostat
-climate:
-  - platform: pid
-    name: "Console Fan Thermostat"
-    id: console_thermostat
-  # Humidor uses Humidity level for sensor, target, and output (raise)
-  # Climate PID expects Temperature for these
-  # 
-    sensor: humidity
-    default_target_temperature: 70  # Using this as default humidity
-    heat_output: proxy_fan_output     # Fan drives humidity up
-
-    # ON state change, publish the values to the x_term numbers defined 
-    # above, so that they can be viewed in HA
-    on_state:
-      - sensor.template.publish:
-          id: p_term
-          state: !lambda 'return -id(console_thermostat).get_proportional_term() * 100.0;'
-      - sensor.template.publish:
-          id: i_term
-          state: !lambda 'return -id(console_thermostat).get_integral_term()* 100.0;'
-      - sensor.template.publish:
-          id: d_term
-          state: !lambda 'return -id(console_thermostat).get_derivative_term()* 100.0;'
-      - sensor.template.publish:
-          id: o_term
-          state: !lambda 'return -id(console_thermostat).get_output_value()* 100.0;'
-  # removed deadband related sensors
-#      - sensor.template.publish:
-#          id: in_deadband_term
-#          state: !lambda 'return id(console_thermostat).in_deadband();'
-#      - sensor.template.publish:
-#          id: e_term
-#          state: !lambda 'return -id(console_thermostat).get_error_value();'
-
-######          VISUAL THERMOSTAT CONTROL
-# The extents of the HA Thermostat
-    visual:
-      min_temperature: 60 °C
-      max_temperature: 80 °C
-######          VISUAL THERMOSTAT CONTROL
-
-    # See the README for setting up these parameters.
-    # These are over ridden by the number templates above.
-    # Currently the defaults match
-    control_parameters:
-      kp: 0.15
-      ki: 0.0015
-      kd: 0
-
-# may not keep this
-      output_averaging_samples: 1
-
-#### Removed Deadband #### CLEANUP
-    # How to behave when close to the target temperature?
-#    deadband_parameters:
-#      threshold_high: 0.0°C
-#      threshold_low: 0.0°C
-#      kp_multiplier: 0.0
-#      ki_multiplier: 0.04
-#      kd_multiplier: 0.0
-#      deadband_output_averaging_samples: 15
-#
+#   Create Automation to set PID thermostat to Heat
 #
 ###  Control State #2 Paused #######################################
+#
 #
 #
 ###  Control State #3 Stopped ######################################
